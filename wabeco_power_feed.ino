@@ -1,160 +1,6 @@
 #include <Bounce2.h>  // Include the Bounce2 library
 
 
-/*
-#define STEP_PIN 3        // Pin for stepper motor step
-#define DIR_PIN 4         // Pin for stepper motor direction
-#define INCREASE_BTN_PIN 6 // Pin for the increase speed button
-#define DECREASE_BTN_PIN 7 // Pin for the decrease speed button
-#define DIR_BTN_PIN 8     // Pin for direction toggle button
-#define START_STOP_BTN_PIN 9 // Pin for the start/stop button (not needed anymore)
-
-#define MAX_SPEED 500     // Maximum speed (steps per second)
-#define MIN_SPEED 10      // Minimum speed (steps per second)
-#define ACCELERATION_TIME 5000 // Time for full acceleration (milliseconds)
-
-// Stepper speed control variables
-unsigned long stepInterval = 1000;   // Initial step interval (microseconds)
-int currentSpeed = 100;              // Current speed (steps per second)
-int targetSpeed = 100;               // Target speed (steps per second)
-bool direction = true;               // Motor direction (true for clockwise, false for counterclockwise)
-
-// Time tracking for acceleration (software)
-unsigned long previousMillis = 0;    // For acceleration timing
-unsigned long accelerationStartTime = 0; // When acceleration starts
-
-// Motor running state (initially set to true to start motor immediately)
-bool motorRunning = true;
-
-// Button debounce objects
-Bounce increaseBtnDebouncer = Bounce();  // Debouncer for increase button
-Bounce decreaseBtnDebouncer = Bounce();  // Debouncer for decrease button
-Bounce dirBtnDebouncer = Bounce();  // Debouncer for direction button
-
-void setup() {
-  pinMode(STEP_PIN, OUTPUT);
-  pinMode(DIR_PIN, OUTPUT);
-  pinMode(INCREASE_BTN_PIN, INPUT_PULLUP);
-  pinMode(DECREASE_BTN_PIN, INPUT_PULLUP);
-  pinMode(DIR_BTN_PIN, INPUT_PULLUP);
-
-  // Initialize debouncers for buttons
-  increaseBtnDebouncer.attach(INCREASE_BTN_PIN);
-  increaseBtnDebouncer.interval(50);  // Set debounce interval to 50ms
-  decreaseBtnDebouncer.attach(DECREASE_BTN_PIN);
-  decreaseBtnDebouncer.interval(50);  // Set debounce interval to 50ms
-  dirBtnDebouncer.attach(DIR_BTN_PIN);
-  dirBtnDebouncer.interval(50);  // Set debounce interval to 50ms
-
-  // Set initial direction (clockwise or counterclockwise)
-  digitalWrite(DIR_PIN, direction);
-
-  // Initialize Timer2 for step pulse generation
-  initTimer2();
-
-  // Start serial for debugging
-  Serial.begin(9600);
-
-  // Start motor immediately (no need for a start/stop button)
-  accelerationStartTime = millis(); // Start acceleration immediately
-}
-
-void loop() {
-  unsigned long currentMillis = millis();
-
-  // Update button states and handle debouncing
-  increaseBtnDebouncer.update();
-  decreaseBtnDebouncer.update();
-  dirBtnDebouncer.update();
-
-  // Read buttons with debounced states
-  if (increaseBtnDebouncer.fell()) {
-    // Increase speed
-    if (targetSpeed < MAX_SPEED) {
-      targetSpeed += 10;  // Increase by 10 steps per second
-      Serial.print("Increased Speed: ");
-      Serial.println(targetSpeed);
-    }
-    // Do not reset acceleration start time, keep it continuous
-  }
-
-  if (decreaseBtnDebouncer.fell()) {
-    // Decrease speed
-    if (targetSpeed > MIN_SPEED) {
-      targetSpeed -= 10;  // Decrease by 10 steps per second
-      Serial.print("Decreased Speed: ");
-      Serial.println(targetSpeed);
-    }
-    // Do not reset acceleration start time, keep it continuous
-  }
-
-  if (dirBtnDebouncer.fell()) {
-    // Toggle direction
-    direction = !direction;
-    digitalWrite(DIR_PIN, direction); // Change direction
-    if (direction) {
-      Serial.println("Direction: Clockwise");
-    } else {
-      Serial.println("Direction: Counter-clockwise");
-    }
-  }
-
-  // Handle acceleration timing, adjust speed gradually
-  if (motorRunning) {
-    unsigned long accelTimeElapsed = currentMillis - accelerationStartTime;
-
-    // Accelerate gradually based on time (no ACCEL_RATE)
-    if (accelTimeElapsed < ACCELERATION_TIME) {
-      // Calculate speed change (from current speed to target speed)
-      float speedChange = (float)(targetSpeed - currentSpeed) * (float)accelTimeElapsed / ACCELERATION_TIME;
-
-      // Apply the calculated speed change
-      currentSpeed = currentSpeed + (int)speedChange;
-    } else {
-      // If the acceleration time has passed, we should reach the target speed
-      currentSpeed = targetSpeed;
-    }
-
-    // Adjust the step interval based on current speed
-    stepInterval = 1000000 / currentSpeed; // Convert speed (steps per second) to interval (microseconds)
-  }
-
-  // Print the current speed and interval every second (limit serial prints)
-  if (currentMillis - previousMillis >= 1000) {  // Print every second
-    previousMillis = currentMillis;
-    if (motorRunning) {
-      Serial.print("Speed: ");
-      Serial.print(currentSpeed);
-      Serial.print(" steps/sec, Interval: ");
-      Serial.println(stepInterval);
-    }
-  }
-}
-
-// Timer2 Interrupt Service Routine for Step Pulse Generation
-ISR(TIMER2_COMPA_vect) {
-  static unsigned long lastStepTime = 0;
-
-  // Only generate step pulses if the motor is running
-  if (motorRunning && (micros() - lastStepTime >= stepInterval)) {
-    // Set the step pin high and low to generate the step pulse
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(10);          // Short pulse duration
-    digitalWrite(STEP_PIN, LOW);
-    lastStepTime = micros();
-  }
-}
-
-// Initialize Timer2 for step pulse generation
-void initTimer2() {
-  // Set Timer2 in CTC mode (Clear Timer on Compare Match)
-  TCCR2A = 0;  // Normal mode (no output waveform)
-  TCCR2B = (1 << WGM22) | (1 << CS21);  // CTC mode, prescaler 8
-  OCR2A = 100; // Set compare match value (adjust this to control the frequency)
-  TIMSK2 |= (1 << OCIE2A);  // Enable Timer2 compare match interrupt
-}
-
-*/
 
 
 #define STEP_PIN 3        // Pin for stepper motor step
@@ -167,16 +13,16 @@ void initTimer2() {
 #define ACCEL_RATE 1     // Rate of acceleration/deceleration (steps per tick???)
 #define MAX_SPEED 5000     // Maximum speed (steps per second)
 #define MIN_SPEED 0      // Minimum speed (steps per second)
-#define ACCELERATION_TIME 1000 // Time for full acceleration (milliseconds)
+#define ACCELERATION_TIME 500 // Time for full acceleration (milliseconds)
 
 // Stepper speed control variables
-unsigned long stepInterval = 1000;   // Initial step interval (microseconds)
+unsigned long stepInterval = 0;   // Initial step interval (microseconds)
 int currentSpeed =  0;              // Current speed (steps per second)
 int targetSpeed =  0;               // Target speed (steps per second)
  int logicalTargetSpeed = targetSpeed;
 bool direction = true;               // Motor direction (true for clockwise, false for counterclockwise)
 bool motorRunning = false;           // Flag to indicate if the motor is running
-bool motorShouldStop = true;
+bool motorShouldStop = false;
 
 
 int speedChangePrClick = 100;
@@ -184,7 +30,7 @@ int speedChangePrClick = 100;
 int speedWhenStopped = 0;
 
 int lastTargetSpeed = 0;  
-
+bool initiated = false;
 // Time tracking for acceleration (software)
 unsigned long previousMillis = 0;    // For acceleration timing
 unsigned long accelerationStartTime = 0; // When acceleration starts
@@ -201,6 +47,8 @@ Bounce startStopBtnDebouncer = Bounce(); // Debouncer for start/stop button
 
 void setup() {
   pinMode(STEP_PIN, OUTPUT);
+      digitalWrite(STEP_PIN, LOW);
+
   pinMode(DIR_PIN, OUTPUT);
   pinMode(INCREASE_BTN_PIN, INPUT_PULLUP);
   pinMode(DECREASE_BTN_PIN, INPUT_PULLUP);
@@ -245,17 +93,18 @@ void loop() {
       Serial.print("Increased Speed: ");
       Serial.println(targetSpeed);
     }
-    accelerationStartTime = currentMillis; // Reset acceleration when speed changes
+    //accelerationStartTime = currentMillis; // Reset acceleration when speed changes
   }
 
   if (decreaseBtnDebouncer.fell()) {
     // Decrease speed
     if (targetSpeed > MIN_SPEED) {
+      
        targetSpeed -= speedChangePrClick;  // Decrease by 10 steps per second
       Serial.print("Decreased Speed: ");
       Serial.println(targetSpeed);
     }
-    accelerationStartTime = currentMillis; // Reset acceleration when speed changes
+    //accelerationStartTime = currentMillis; // Reset acceleration when speed changes
   }
 
   if (dirBtnDebouncer.fell()) {
@@ -272,6 +121,7 @@ void loop() {
 
   if (startStopBtnDebouncer.fell()) {
           Serial.println("toggle motor start");
+          initiated = true; // use this if there is stuff that shall not be done before after first start...
 
     // Toggle motor running state
     if (motorRunning == true) {
@@ -347,10 +197,18 @@ if (accelTimeElapsed < ACCELERATION_TIME) {
    } else {
      logicalTargetSpeed = targetSpeed;
    }
- 
-    if (accelTimeElapsed < ACCELERATION_TIME) {
+
+   int dynamicAccelTime =  ACCELERATION_TIME;
+   if (targetSpeed > 3000 && targetSpeed > currentSpeed) {
+    dynamicAccelTime * 4;
+   }   
+   else if (targetSpeed > 1500 && targetSpeed > currentSpeed) {
+    dynamicAccelTime * 2;
+   }
+   
+    if (accelTimeElapsed < dynamicAccelTime) {
       // Calculate acceleration factor based on time elapsed (quadratic curve)
-      float progress = (float)accelTimeElapsed / ACCELERATION_TIME;  // Value from 0 to 1
+      float progress = (float)accelTimeElapsed / dynamicAccelTime;  // Value from 0 to 1
       // speedFactor = progress; * progress;  // Linear
       // speedFactor = progress; * progress;  // Quadratic curve (slow at start, fast at end)
        speedFactor = (1 - cos(progress * PI)) / 2;  // Sinusoidal curve
@@ -620,7 +478,7 @@ ISR(TIMER2_COMPA_vect) {
   static unsigned long lastStepTime = 0;
 
   // Only generate step pulses if the motor is running
-  if (/*motorRunning*/ stepInterval<10000000 && (micros() - lastStepTime >= stepInterval)) {
+  if ( motorRunning && initiated && stepInterval<10000000 && (micros() - lastStepTime >= stepInterval)) {
     // Set the step pin high and low to generate the step pulse
     digitalWrite(STEP_PIN, HIGH);
     delayMicroseconds(10);          // Short pulse duration
