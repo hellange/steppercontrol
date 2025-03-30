@@ -9,9 +9,9 @@
 #define START_STOP_BTN_PIN 9 // Pin for the start/stop button
 
 #define ACCEL_RATE 1     // Rate of acceleration/deceleration (steps per tick???)
-#define MAX_SPEED 5000     // Maximum speed (steps per second)
+#define MAX_SPEED 3000     // Maximum speed (steps per second)
 #define MIN_SPEED 0      // Minimum speed (steps per second)
-#define ACCELERATION_TIME 500 // Time for full acceleration (milliseconds)
+#define ACCELERATION_TIME 1000 // Time for full acceleration (milliseconds)
 
 
 
@@ -23,6 +23,9 @@ int analogPin = A0;
 int buttonValue = 0;   // Variable to store the value read from the keypad
 
 
+
+int analogSpeedPin = A5;  
+int analogSpeedDialValue = 0;   
 
 
 
@@ -58,6 +61,20 @@ Bounce decreaseBtnDebouncer = Bounce();  // Debouncer for decrease button
 Bounce dirBtnDebouncer = Bounce();  // Debouncer for direction button
 Bounce startStopBtnDebouncer = Bounce(); // Debouncer for start/stop button
 
+
+
+
+// for filter
+const int maxValues = 100;  // The size of the array to hold the last 100 values
+int values[maxValues];      // Array to store the last 100 values
+int currentIndex = 0;       // Index for the current value
+long sum = 0;               // Sum of all the values in the array
+unsigned long lastFilteredMillis = 0;
+
+
+
+
+
 void setup() {
   pinMode(STEP_PIN, OUTPUT);
   digitalWrite(STEP_PIN, LOW);
@@ -78,16 +95,22 @@ void setup() {
   pinMode(A2, INPUT_PULLUP);
   pinMode(A3, INPUT_PULLUP);
   pinMode(A4, INPUT_PULLUP);
-  pinMode(A6, INPUT_PULLUP);
-  pinMode(A6, INPUT_PULLUP);
+  pinMode(A6, INPUT_PULLUP); //??
+  pinMode(A6, INPUT_PULLUP); // ??
+
+
+
+
+  
   
 
   // Initialize debouncers for buttons
  // increaseBtnDebouncer.attach(INCREASE_BTN_PIN);
  // increaseBtnDebouncer.interval(50);  // Set debounce interval to 50ms
     // Initialize debouncers for buttons
-  increaseBtnDebouncer.attach(A3);
-  increaseBtnDebouncer.interval(50);  // Set debounce interval to 50ms
+ 
+  //increaseBtnDebouncer.attach(A3);
+  //increaseBtnDebouncer.interval(50);  // Set debounce interval to 50ms
 
 
   
@@ -104,7 +127,9 @@ void setup() {
   
   //startStopBtnDebouncer.attach(START_STOP_BTN_PIN);
   //startStopBtnDebouncer.interval(50);  // Set debounce interval to 50ms
-   startStopBtnDebouncer.attach(A1);
+  
+
+  startStopBtnDebouncer.attach(A1);
   startStopBtnDebouncer.interval(50);  // Set debounce interval to 50ms
 
 
@@ -133,6 +158,48 @@ void setup() {
   Serial.begin(115200);
 }
 
+
+
+// four digit number
+void printLcd4Digit(int col, int row, int value) {
+
+  if (value<10) {
+        lcd.setCursor(col, row);  // Set the cursor to the second row, first column
+
+      lcd.println("   ");
+            lcd.setCursor(col+3, row);  // Set the cursor to the second row, first column
+    lcd.print(value);
+
+    } else
+    if (value<100) {
+        lcd.setCursor(col, row);  // Set the cursor to the second row, first column
+
+      lcd.println("  ");
+            lcd.setCursor(col+2, row);  // Set the cursor to the second row, first column
+    lcd.print(value);
+
+    } else if (value<1000) {
+        lcd.setCursor(col, row);  // Set the cursor to the second row, first column
+
+      lcd.println(" ");
+            lcd.setCursor(col+1, row);  // Set the cursor to the second row, first column
+    lcd.print(value);
+
+    }else {
+            lcd.setCursor(col, row);  // Set the cursor to the second row, first column
+    lcd.print(value);
+
+    }
+
+
+}
+
+
+
+
+
+
+
 int previousLcdMillis = 0;
 int aliveCounter = 0;
 void handleLcdButtons(float currentMillis) {
@@ -154,10 +221,75 @@ void handleLcdButtons(float currentMillis) {
 //    lcd.print("STOPPED");
 //  }
 
+/*
   buttonValue = analogRead(analogPin);  // Read the value from the keypad (A0 pin)
+
+    analogSpeedDialValue = analogRead(analogSpeedPin);   
+    analogSpeedDialValue = analogSpeedDialValue * 5;
+
+ /// do some filtering
+ // Update the sum by subtracting the oldest value and adding the new one
+  sum -= values[currentIndex];  // Remove the oldest value from the sum
+  values[currentIndex] = analogSpeedDialValue;  // Store the new value
+  sum += values[currentIndex];  // Add the new value to the sum
+  
+  // Move to the next index in the array, wrapping around when we reach the end
+  currentIndex = (currentIndex + 1) % maxValues;
+  
+  // Calculate the mean
+  long meanValue = sum / maxValues;
+  */
+  
+  
+   long meanValue = sum / maxValues; // from filtering analog input 
+   targetSpeed = meanValue;
+
+
+   // targetSpeed = analogSpeedDialValue * 5.0;
+
+    
+// override id rapid....
+    int  rapid = digitalRead( A3);
+    if(rapid==0) {
+      targetSpeed = 3000;
+    }
+    
+
   // Display the button value on the LCD
-  lcd.setCursor(12, 0);  // Set the cursor to the second row, first column
-  lcd.print(buttonValue);
+  //lcd.setCursor(12, 0);  // Set the cursor to the second row, first column
+  //  lcd.print(buttonValue);
+
+  printLcd4Digit(12,0,analogSpeedDialValue);
+  /*
+  if (analogSpeedDialValue<10) {
+        lcd.setCursor(12, 0);  // Set the cursor to the second row, first column
+
+      lcd.println("   ");
+            lcd.setCursor(15, 0);  // Set the cursor to the second row, first column
+    lcd.print(analogSpeedDialValue);
+
+    } else
+    if (analogSpeedDialValue<100) {
+        lcd.setCursor(12, 0);  // Set the cursor to the second row, first column
+
+      lcd.println("  ");
+            lcd.setCursor(14, 0);  // Set the cursor to the second row, first column
+    lcd.print(analogSpeedDialValue);
+
+    } else if (analogSpeedDialValue<1000) {
+        lcd.setCursor(12, 0);  // Set the cursor to the second row, first column
+
+      lcd.println(" ");
+            lcd.setCursor(13, 0);  // Set the cursor to the second row, first column
+    lcd.print(analogSpeedDialValue);
+
+    }else {
+            lcd.setCursor(12, 0);  // Set the cursor to the second row, first column
+    lcd.print(analogSpeedDialValue);
+
+    }
+*/
+
 
   lcd.setCursor(7, 0);
   lcd.print(aliveCounter++ % 0xff);
@@ -218,7 +350,11 @@ if (direction) {
 
 }
 
-     
+
+
+  printLcd4Digit(12,1,targetSpeed);
+
+    /*
 
    lcd.setCursor(12,1);  
   lcd.print(targetSpeed);
@@ -233,8 +369,12 @@ if (direction) {
          lcd.print("   ");
   }
   
+  
    lcd.setCursor(12,1);   
   lcd.print(targetSpeed);
+*/
+
+  
      lcd.setCursor(0,1);  
 
 if (motorRunning && motorShouldStop) {
@@ -272,6 +412,26 @@ void decreaseSpeed() {
     }
 }
 
+
+void setDirection(bool up) {
+       if (motorRunning and (targetSpeed > 500 or currentSpeed > 500) ) {
+              Serial.println("ERROR: Motor must be stopped or run at low speed before changing direction");
+              return;
+      }
+      if (up) {
+               digitalWrite(DIR_PIN, 0); // Change direction
+
+      } else {
+                       digitalWrite(DIR_PIN, 1); // Change direction
+
+      }
+      direction = !up;
+    if (direction) {
+      Serial.println("Direction: Clockwise");
+    } else {
+      Serial.println("Direction: Counter-clockwise");
+    }
+}
 void toggleDirection() {
       // Toggle direction
       if (motorRunning and (targetSpeed > 500 or currentSpeed > 500) ) {
@@ -287,6 +447,45 @@ void toggleDirection() {
     }
   
 }
+
+void start(float currentMillis, bool up) {
+    Serial.print("toggle motor start, dir:");
+    Serial.println(up);
+    if (initiated == false) {
+       // Clear potential error message
+       lcd.setCursor(0, 0);
+       lcd.print("                ");
+              lcd.setCursor(0, 1);
+       lcd.print("                ");
+       initiated = true; // use this if there is stuff that shall not be done before after first start...
+    }
+
+     setDirection(up);
+     
+    // Toggle motor running state
+    if (motorRunning == true) {
+      Serial.println("already started");
+    } else if (motorRunning == false) {
+      Serial.println("try to start");
+      accelerationStartTime = currentMillis; // Reset acceleration time when starting
+      motorRunning = true;
+      motorShouldStop = false;
+      //targetSpeed = speedWhenStopped;
+    }
+}
+void stop(float currentMillis) {
+   if (motorRunning == true) {
+      Serial.println("try to stop");
+      accelerationStartTime = currentMillis; // Reset acceleration time when starting
+      //motorRunning = false;
+      motorShouldStop = true;
+      
+    } else if (motorRunning == false) {
+      Serial.println("already stopped");
+      
+    }
+}
+
 
 void toggleStartStop(float currentMillis) {
     Serial.println("toggle motor start");
@@ -321,15 +520,18 @@ void handleSeparateButtons(float currentMillis) {
   }
 
   if (decreaseBtnDebouncer.fell()) {
-    decreaseSpeed();
+     start(currentMillis, false);  
+
+    //decreaseSpeed();
   }
 
   if (dirBtnDebouncer.fell()) {
-     toggleDirection();
+     //toggleDirection();
   }
 
   if (startStopBtnDebouncer.fell()) {
-    toggleStartStop(currentMillis);
+    //toggleStartStop(currentMillis);
+    start(currentMillis, true); //helge
   }
 }
 
@@ -338,11 +540,69 @@ void handleSeparateButtons(float currentMillis) {
 
 
 void loop() {
+
+
+
   
   unsigned long currentMillis = millis();
+
+
+  
+
+
+ 
+  
   handleSeparateButtons(currentMillis);
   handleLcdButtons(currentMillis);
 
+
+
+if (millis() > lastFilteredMillis + 10) {
+  lastFilteredMillis = millis();
+ buttonValue = analogRead(analogPin);  // Read the value from the keypad (A0 pin)
+
+    analogSpeedDialValue = analogRead(analogSpeedPin);   
+    analogSpeedDialValue = analogSpeedDialValue * 5;
+
+ /// do some filtering
+ // Update the sum by subtracting the oldest value and adding the new one
+  sum -= values[currentIndex];  // Remove the oldest value from the sum
+  values[currentIndex] = analogSpeedDialValue;  // Store the new value
+  sum += values[currentIndex];  // Add the new value to the sum
+  
+  // Move to the next index in the array, wrapping around when we reach the end
+  currentIndex = (currentIndex + 1) % maxValues;
+  
+  // Calculate the mean
+  //long meanValue = sum / maxValues;
+}
+
+
+
+
+
+  
+
+  int  s = digitalRead( A1 );
+    int  s2 = digitalRead( A2);
+     // motor control must be idle when starting up !!!!!!!!
+if (!initiated && (s == 0 || s2==0)) {
+     Serial.println("ERROR! Set motor control to idle !!!!!!!");
+            lcd.setCursor(0, 0);
+            lcd.print("ERROR:");
+            lcd.setCursor(0, 1);
+            lcd.print("Disable motor !");
+            return;
+}
+
+  if (s > 0 && s2 > 0) {
+
+    if (motorRunning == true && motorShouldStop == false) {
+      Serial.println("stop!!!!");
+      stop(currentMillis);
+    }
+  }
+ 
   
   if (motorRunning == true && motorShouldStop == true && currentSpeed == 0) {
     motorRunning = false;
